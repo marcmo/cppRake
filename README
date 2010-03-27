@@ -1,0 +1,6 @@
+rake support for building c++ projects
+
+goals:
+-outputfiles should be seperated from source files all the time
+-use gcc dependency tracking
+
