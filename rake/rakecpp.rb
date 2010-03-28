@@ -5,13 +5,20 @@ require 'rake/loaders/makefile'
 verbose(true) 
 
 CC = "g++"
+INCLUDES = INCLUDEDIRS.collect {|p| "-I" + p }.join(' ')
+CXXFLAGS = "-g -Wall " + INCLUDES
 OBJ = SRC.collect { |fn| File.join(OBJDIR, File.basename(fn).ext('o')) }
 
 CLEAN.include(OBJ, OBJDIR, LIBFILE,".depends.mf")
 CLOBBER.include(PROG)
 
+def putSh x
+  puts x
+  sh x
+end
+
 file ".depends.mf" => SRC do |t|
-  sh "#{CC} -MM " + t.prerequisites.join(' ') + " > #{t.name}"
+  putSh "#{CC} #{INCLUDES} -MM " + t.prerequisites.join(' ') + " > #{t.name}"
 end
 
 SPACE_MARK = "__&NBSP;__"
@@ -42,16 +49,19 @@ end
 def respace(str)
   str.gsub(/#{SPACE_MARK}/, ' ')
 end
-# Rake::Task[".depends.mf"].invoke
-# loadDependencies ".depends.mf"
+
 task :loadDependencies => ".depends.mf" do
+  puts "invoking loadDependencies"
   loadDependencies ".depends.mf"
 end
 
+desc "will build and run the thing"
 task :default => [:build, :run]
 
+desc "build executable"
 task :build => [:loadDependencies,PROG]
 
+desc "run program"
 task :run => [PROG] do
   sh "./#{PROG}" 
 end
@@ -69,7 +79,7 @@ directory OBJDIR
 
 rule '.o' => lambda{ |objfile| find_source(objfile) } do |t|
   Task[OBJDIR].invoke
-  sh "#{CC} -c -o #{t.name} #{t.source}" 
+  sh "#{CC} #{CXXFLAGS} -c -o #{t.name} #{t.source}" 
 end
 
 def find_source(objfile)
