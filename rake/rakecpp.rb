@@ -4,22 +4,14 @@ require 'rake/loaders/makefile'
 
 verbose(true) 
 
-PROG = "hello" 
-LIBNAME = PROG
-LIBFILE = "lib#{LIBNAME}.a" 
-CFLAGS=""
-
-SRC = FileList['**/*.cpp']
-
-OBJDIR = 'obj'
+CC = "g++"
 OBJ = SRC.collect { |fn| File.join(OBJDIR, File.basename(fn).ext('o')) }
 
 CLEAN.include(OBJ, OBJDIR, LIBFILE,".depends.mf")
 CLOBBER.include(PROG)
 
-
 file ".depends.mf" => SRC do |t|
-  sh "g++ -MM " + t.prerequisites.join(' ') + " > #{t.name}"
+  sh "#{CC} -MM " + t.prerequisites.join(' ') + " > #{t.name}"
 end
 
 SPACE_MARK = "__&NBSP;__"
@@ -41,7 +33,7 @@ def process_dep_line(line)
   file_tasks.strip.split.each do |file_task|
     file_task = objectPath(file_task)
     file file_task => dependents
-    puts "wrote: " + file_task + " => " + dependents.join(' ')
+    puts "added dependency: " + file_task + " => " + dependents.join(' ')
   end
 end
 def objectPath(str)
@@ -50,25 +42,22 @@ end
 def respace(str)
   str.gsub(/#{SPACE_MARK}/, ' ')
 end
-task :fooo => ".depends.mf"
-Rake::Task[:fooo].invoke
-loadDependencies ".depends.mf"
-# import ".depends.mf"
-# file "obj/Foo.o" => "src/Foo.h"
+# Rake::Task[".depends.mf"].invoke
+# loadDependencies ".depends.mf"
+task :loadDependencies => ".depends.mf" do
+  loadDependencies ".depends.mf"
+end
+
 task :default => [:build, :run]
 
-task :debug do
-  display_tasks_and_comments
-  # puts "src/Foo.o".investigate
-end
-task :build => [PROG]
+task :build => [:loadDependencies,PROG]
 
 task :run => [PROG] do
   sh "./#{PROG}" 
 end
 
 file PROG => [LIBFILE] do
-  sh "g++ -o #{PROG} -L. -l#{LIBNAME}" 
+  sh "#{CC} -o #{PROG} -L. -l#{LIBNAME}" 
 end
 
 file LIBFILE => OBJ do
@@ -80,7 +69,7 @@ directory OBJDIR
 
 rule '.o' => lambda{ |objfile| find_source(objfile) } do |t|
   Task[OBJDIR].invoke
-  sh "g++ -c -o #{t.name} #{t.source}" 
+  sh "#{CC} -c -o #{t.name} #{t.source}" 
 end
 
 def find_source(objfile)
@@ -94,6 +83,6 @@ end
 # SRC.each do |srcfile|
 #   objfile = File.join(OBJDIR, File.basename(srcfile).ext('o'))
 #   file objfile => [srcfile, OBJDIR] do
-#     sh "g++ -c -o #{objfile} #{srcfile}" 
+#     sh "#{CC} -c -o #{objfile} #{srcfile}" 
 #   end
 # end
