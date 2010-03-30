@@ -1,10 +1,11 @@
+$:.unshift File.dirname(__FILE__) + '/.'
 require 'rake/clean'
-require 'rake/classic_namespace'
-require 'rake/loaders/makefile'
+require 'rakeutils'
 
 verbose(true) 
 
 CC = "g++"
+CC_AND_PREP = "#{CC} " + expandPreprocessorSymbols
 INCLUDES = INCLUDEDIRS.collect {|p| "-I" + p }.join(' ')
 CXXFLAGS = "-g -Wall " + INCLUDES
 OBJ = SRC.collect { |fn| File.join(OBJDIR, File.basename(fn).ext('o')) }
@@ -18,36 +19,7 @@ def putSh x
 end
 
 file ".depends.mf" => SRC do |t|
-  putSh "#{CC} #{INCLUDES} -MM " + t.prerequisites.join(' ') + " > #{t.name}"
-end
-
-SPACE_MARK = "__&NBSP;__"
-def loadDependencies(fn)
-  open(fn) do |mf|
-    lines = mf.read
-    lines.gsub!(/\\ /, SPACE_MARK)
-    lines.gsub!(/#[^\n]*\n/m, "")
-    lines.gsub!(/\\\n/, ' ')
-    lines.split("\n").each do |line|
-      process_dep_line(line)
-    end
-  end
-end
-def process_dep_line(line)
-  file_tasks, args = line.split(':')
-  return if args.nil?
-  dependents = args.split.map { |d| respace(d) }
-  file_tasks.strip.split.each do |file_task|
-    file_task = objectPath(file_task)
-    file file_task => dependents
-    puts "added dependency: " + file_task + " => " + dependents.join(' ')
-  end
-end
-def objectPath(str)
-  OBJDIR + "/" + respace(str)
-end
-def respace(str)
-  str.gsub(/#{SPACE_MARK}/, ' ')
+  putSh "#{CC_AND_PREP} #{INCLUDES} -MM " + t.prerequisites.join(' ') + " > #{t.name}"
 end
 
 task :loadDependencies => ".depends.mf" do
@@ -67,7 +39,7 @@ task :run => [PROG] do
 end
 
 file PROG => [LIBFILE] do
-  sh "#{CC} -o #{PROG} -L. -l#{LIBNAME}" 
+  sh "#{CC} -o #{PROG} -L. -l#{LIBNAME} " + expandLibraries 
 end
 
 file LIBFILE => OBJ do
@@ -79,12 +51,7 @@ directory OBJDIR
 
 rule '.o' => lambda{ |objfile| find_source(objfile) } do |t|
   Task[OBJDIR].invoke
-  sh "#{CC} #{CXXFLAGS} -c -o #{t.name} #{t.source}" 
-end
-
-def find_source(objfile)
-  base = File.basename(objfile, '.o')
-  SRC.find { |s| File.basename(s, '.cpp') == base }
+  sh "#{CC} " + expandPreprocessorSymbols + " #{CXXFLAGS} -c -o #{t.name} #{t.source}" 
 end
 
 # Alternatives
