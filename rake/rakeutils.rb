@@ -25,7 +25,7 @@ def process_dep_line(line)
   file_tasks.strip.split.each do |file_task|
     file_task = objectPath(file_task)
     file file_task => dependents
-    puts "added dependency: " + file_task + " => " + dependents.join(' ')
+    # puts "added dependency: " + file_task + " => " + dependents.join(' ')
   end
 end
 def objectPath(str)
@@ -45,4 +45,7 @@ def expandPreprocessorSymbols
 end
 def expandLibraries 
   Libs.collect {|p| '-l' + p }.join(' ')
+end
+def expandLibIncludePath
+  LibIncludePath.collect {|p| '-L"' + p + '"' }.join(' ')
 end

@@ -4,17 +4,18 @@ require 'rakeutils'
 
 verbose(true) 
 
+usingWholeArchive=false
 CC = "g++"
 CC_AND_PREP = "#{CC} " + expandPreprocessorSymbols
 INCLUDES = INCLUDEDIRS.collect {|p| "-I" + p }.join(' ')
-CXXFLAGS = "-g -Wall " + INCLUDES
+CXXFLAGS = "-O0 -g3 -Wall -c -fmessage-length=0"
 OBJ = SRC.collect { |fn| File.join(OBJDIR, File.basename(fn).ext('o')) }
 
 CLEAN.include(OBJ, OBJDIR, LIBFILE,".depends.mf")
 CLOBBER.include(PROG)
 
 def putSh x
-  puts x
+  # puts x
   sh x
 end
 
@@ -39,7 +40,11 @@ task :run => [PROG] do
 end
 
 file PROG => [LIBFILE] do
-  sh "#{CC} -o #{PROG} -L. -l#{LIBNAME} " + expandLibraries 
+  if usingWholeArchive
+    sh "#{CC} -o #{PROG} -L. " + expandLibIncludePath + " -Wl,--whole-archive -l#{LIBNAME} -Wl,--no-whole-archive " + expandLibraries 
+  else
+    sh "#{CC} -o #{PROG} -L. " + expandLibIncludePath + " " + OBJ.collect {|f| f }.join(' ') + " " + expandLibraries 
+  end
 end
 
 file LIBFILE => OBJ do
@@ -51,7 +56,7 @@ directory OBJDIR
 
 rule '.o' => lambda{ |objfile| find_source(objfile) } do |t|
   Task[OBJDIR].invoke
-  sh "#{CC} " + expandPreprocessorSymbols + " #{CXXFLAGS} -c -o #{t.name} #{t.source}" 
+  sh "#{CC} " + expandPreprocessorSymbols + " #{INCLUDES} #{CXXFLAGS} -o #{t.name} #{t.source}" 
 end
 
 # Alternatives

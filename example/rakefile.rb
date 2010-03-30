@@ -6,6 +6,7 @@ OBJDIR = 'obj'
 INCLUDEDIRS = ['include']
 PreprocSymbols=[]
 Libs=[]
+LibIncludePath=[]
 
 require '../rake/rakecpp'
 
