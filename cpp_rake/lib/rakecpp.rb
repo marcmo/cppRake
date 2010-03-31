@@ -1,3 +1,4 @@
+VERSION = "0.0.2"
 $:.unshift File.dirname(__FILE__) + '/.'
 require 'rake/clean'
 require 'rakeutils'

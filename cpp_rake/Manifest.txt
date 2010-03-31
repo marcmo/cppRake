@@ -1,0 +1,9 @@
+.autotest
+History.txt
+Manifest.txt
+README.txt
+Rakefile
+bin/cpp_rake
+lib/rakecpp.rb
+lib/rakeutils.rb
+test/test_cpp_rake.rb

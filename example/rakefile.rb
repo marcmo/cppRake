@@ -8,5 +8,5 @@ PreprocSymbols=[]
 Libs=[]
 LibIncludePath=[]
 
-require '../rake/rakecpp'
+require 'rakecpp'
 
