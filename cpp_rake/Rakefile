@@ -1,12 +1,6 @@
-# -*- ruby -*-
-
 require 'rubygems'
 require 'hoe'
 
 Hoe.spec 'cpp_rake' do
   developer('marcomo', 'oliver.mueller@gmail.com')
-
-  # self.rubyforge_name = 'cpp_rakex' # if different than 'cpp_rake'
 end
-
-# vim: syntax=ruby
